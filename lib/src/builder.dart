@@ -22,17 +22,20 @@ import 'package:analyzer/dart/element/type.dart' as analyzer;
 import 'package:analyzer/dart/element/type_provider.dart';
 import 'package:analyzer/dart/element/type_system.dart';
 import 'package:analyzer/dart/element/visitor.dart';
+
 // ignore: implementation_imports
-import 'package:analyzer/src/dart/element/element.dart'
-    show ElementAnnotationImpl;
+import 'package:analyzer/src/dart/element/element.dart' show ElementAnnotationImpl;
+
 // ignore: implementation_imports
-import 'package:analyzer/src/dart/element/inheritance_manager3.dart'
-    show InheritanceManager3, Name;
+import 'package:analyzer/src/dart/element/inheritance_manager3.dart' show InheritanceManager3, Name;
+
 // ignore: implementation_imports
 import 'package:analyzer/src/dart/element/member.dart' show ExecutableMember;
+
 // ignore: implementation_imports
 import 'package:analyzer/src/dart/element/type_algebra.dart' show Substitution;
 import 'package:build/build.dart';
+
 // Do not expose [refer] in the default namespace.
 //
 // [refer] allows a reference to include or not include a URL. Omitting the URL
@@ -69,20 +72,16 @@ class MockBuilder implements Builder {
     final sourceLibIsNonNullable = entryLib.isNonNullableByDefault;
     final mockLibraryAsset = buildStep.inputId.changeExtension('.mocks.dart');
     final inheritanceManager = InheritanceManager3();
-    final mockTargetGatherer =
-        _MockTargetGatherer(entryLib, inheritanceManager);
+    final mockTargetGatherer = _MockTargetGatherer(entryLib, inheritanceManager);
 
     final entryAssetId = await buildStep.resolver.assetIdForElement(entryLib);
-    final assetUris = await _resolveAssetUris(buildStep.resolver,
-        mockTargetGatherer._mockTargets, entryAssetId.path, entryLib);
+    final assetUris =
+        await _resolveAssetUris(buildStep.resolver, mockTargetGatherer._mockTargets, entryAssetId.path, entryLib);
 
     final mockLibraryInfo = _MockLibraryInfo(mockTargetGatherer._mockTargets,
-        assetUris: assetUris,
-        entryLib: entryLib,
-        inheritanceManager: inheritanceManager);
+        assetUris: assetUris, entryLib: entryLib, inheritanceManager: inheritanceManager);
 
-    if (mockLibraryInfo.fakeClasses.isEmpty &&
-        mockLibraryInfo.mockClasses.isEmpty) {
+    if (mockLibraryInfo.fakeClasses.isEmpty && mockLibraryInfo.mockClasses.isEmpty) {
       // Nothing to mock here!
       return;
     }
@@ -102,8 +101,7 @@ class MockBuilder implements Builder {
       // `Mock.noSuchMethod` is `@visibleForTesting`, but the generated code is
       // not always in a test directory; the Mockito `example/iss` tests, for
       // example.
-      b.body.add(Code(
-          '// ignore_for_file: invalid_use_of_visible_for_testing_member\n'));
+      b.body.add(Code('// ignore_for_file: invalid_use_of_visible_for_testing_member\n'));
       b.body.add(Code('// ignore_for_file: prefer_const_constructors\n'));
       // The code_builder `asA` API unconditionally adds defensive parentheses.
       b.body.add(Code('// ignore_for_file: unnecessary_parenthesis\n'));
@@ -116,8 +114,7 @@ class MockBuilder implements Builder {
     });
 
     final emitter = DartEmitter(
-        allocator: _AvoidConflictsAllocator(
-            coreConflicts: mockLibraryInfo.coreConflicts),
+        allocator: _AvoidConflictsAllocator(coreConflicts: mockLibraryInfo.coreConflicts),
         orderDirectives: true,
         useNullSafetySyntax: sourceLibIsNonNullable);
     final rawOutput = mockLibrary.accept(emitter).toString();
@@ -139,10 +136,7 @@ $rawOutput
   }
 
   Future<Map<Element, String>> _resolveAssetUris(
-      Resolver resolver,
-      List<_MockTarget> mockTargets,
-      String entryAssetPath,
-      LibraryElement entryLib) async {
+      Resolver resolver, List<_MockTarget> mockTargets, String entryAssetPath, LibraryElement entryLib) async {
     // We pass in the `Future<dynamic>` type so that an asset URI is known for
     // `Future`, which is needed when overriding some methods which return
     // `FutureOr`.
@@ -160,9 +154,7 @@ $rawOutput
       type.element.accept(typeVisitor);
       if (type.alias != null) type.alias!.element.accept(typeVisitor);
       // For a type like `Foo<Bar>`, add the `Bar`.
-      type.typeArguments
-          .whereType<analyzer.InterfaceType>()
-          .forEach(addTypesFrom);
+      type.typeArguments.whereType<analyzer.InterfaceType>().forEach(addTypesFrom);
       // For a type like `Foo extends Bar<Baz>`, add the `Baz`.
       for (final supertype in type.allSupertypes) {
         addTypesFrom(supertype);
@@ -182,8 +174,7 @@ $rawOutput
       // Types which may be referenced.
       ...typeVisitor._elements,
       // Fallback generator functions which may be referenced.
-      for (final mockTarget in mockTargets)
-        ...mockTarget.fallbackGenerators.values,
+      for (final mockTarget in mockTargets) ...mockTarget.fallbackGenerators.values,
     ];
 
     for (final element in elements) {
@@ -201,8 +192,7 @@ $rawOutput
         if (typeAssetId.path.startsWith('lib/')) {
           typeUris[element] = typeAssetId.uri.toString();
         } else {
-          typeUris[element] =
-              p.relative(typeAssetId.path, from: p.dirname(entryAssetPath));
+          typeUris[element] = p.relative(typeAssetId.path, from: p.dirname(entryAssetPath));
         }
       } on UnresolvableAssetException {
         // Asset may be in a summary.
@@ -218,8 +208,7 @@ $rawOutput
   ///
   /// If [element] is not exported by any libraries in this set, then
   /// [element]'s declaring library is returned.
-  static LibraryElement _findExportOf(
-      Iterable<LibraryElement> inputLibraries, Element element) {
+  static LibraryElement _findExportOf(Iterable<LibraryElement> inputLibraries, Element element) {
     final elementName = element.name;
     if (elementName == null) {
       return element.library!;
@@ -316,8 +305,7 @@ class _TypeVisitor extends RecursiveElementVisitor<void> {
       if (!alreadyVisitedElement) {
         type.element.typeParameters.forEach(visitTypeParameterElement);
 
-        final toStringMethod =
-            type.element.lookUpMethod('toString', type.element.library);
+        final toStringMethod = type.element.lookUpMethod('toString', type.element.library);
         if (toStringMethod != null && toStringMethod.parameters.isNotEmpty) {
           // In a Fake class which implements a class which overrides `toString`
           // with additional (optional) parameters, we must also override
@@ -429,8 +417,7 @@ class _MockTarget {
     required this.fallbackGenerators,
     this.hasExplicitTypeArguments = false,
     String? mockName,
-  }) : mockName = mockName ??
-            'Mock${classType.alias?.element.name ?? classType.element.name}';
+  }) : mockName = mockName ?? 'Mock${classType.alias?.element.name ?? classType.element.name}';
 
   InterfaceElement get interfaceElement => classType.element;
 }
@@ -444,8 +431,7 @@ class _MockTargetGatherer {
 
   final InheritanceManager3 _inheritanceManager;
 
-  _MockTargetGatherer._(
-      this._entryLib, this._mockTargets, this._inheritanceManager) {
+  _MockTargetGatherer._(this._entryLib, this._mockTargets, this._inheritanceManager) {
     _checkClassesToMockAreValid();
   }
 
@@ -472,59 +458,48 @@ class _MockTargetGatherer {
         final annotationClass = annotation.element!.enclosingElement!.name;
         switch (annotationClass) {
           case 'GenerateMocks':
-            mockTargets
-                .addAll(_mockTargetsFromGenerateMocks(annotation, entryLib));
+            mockTargets.addAll(_mockTargetsFromGenerateMocks(annotation, entryLib));
             break;
           case 'GenerateNiceMocks':
-            mockTargets.addAll(
-                _mockTargetsFromGenerateNiceMocks(annotation, entryLib));
+            mockTargets.addAll(_mockTargetsFromGenerateNiceMocks(annotation, entryLib));
             break;
         }
       }
     }
 
-    return _MockTargetGatherer._(
-        entryLib, mockTargets.toList(), inheritanceManager);
+    return _MockTargetGatherer._(entryLib, mockTargets.toList(), inheritanceManager);
   }
 
   static ast.NamedType? _mockType(ast.CollectionElement mockSpec) {
     if (mockSpec is! ast.InstanceCreationExpression) {
-      throw InvalidMockitoAnnotationException(
-          'MockSpecs must be constructor calls inside the annotation, '
+      throw InvalidMockitoAnnotationException('MockSpecs must be constructor calls inside the annotation, '
           'please inline them if you are using a variable');
     }
-    return mockSpec.constructorName.type.typeArguments?.arguments.firstOrNull
-        as ast.NamedType?;
+    return mockSpec.constructorName.type.typeArguments?.arguments.firstOrNull as ast.NamedType?;
   }
 
   static ast.ListLiteral? _customMocksAst(ast.Annotation annotation) =>
-      (annotation.arguments!.arguments
-                  .firstWhereOrNull((arg) => arg is ast.NamedExpression)
-              as ast.NamedExpression?)
+      (annotation.arguments!.arguments.firstWhereOrNull((arg) => arg is ast.NamedExpression) as ast.NamedExpression?)
           ?.expression as ast.ListLiteral?;
 
   static ast.ListLiteral _niceMocksAst(ast.Annotation annotation) =>
       annotation.arguments!.arguments.first as ast.ListLiteral;
 
-  static Iterable<_MockTarget> _mockTargetsFromGenerateMocks(
-      ElementAnnotation annotation, LibraryElement entryLib) {
+  static Iterable<_MockTarget> _mockTargetsFromGenerateMocks(ElementAnnotation annotation, LibraryElement entryLib) {
     final generateMocksValue = annotation.computeConstantValue()!;
     final classesField = generateMocksValue.getField('classes')!;
     if (classesField.isNull) {
-      throw InvalidMockitoAnnotationException(
-          'The GenerateMocks "classes" argument is missing, includes an '
+      throw InvalidMockitoAnnotationException('The GenerateMocks "classes" argument is missing, includes an '
           'unknown type, or includes an extension');
     }
     final mockTargets = <_MockTarget>[];
     for (final objectToMock in classesField.toListValue()!) {
       final typeToMock = objectToMock.toTypeValue();
       if (typeToMock == null) {
-        throw InvalidMockitoAnnotationException(
-            'The "classes" argument includes a non-type: $objectToMock');
+        throw InvalidMockitoAnnotationException('The "classes" argument includes a non-type: $objectToMock');
       }
       if (typeToMock.isDynamic) {
-        throw InvalidMockitoAnnotationException(
-            'Mockito cannot mock `dynamic`');
+        throw InvalidMockitoAnnotationException('Mockito cannot mock `dynamic`');
       }
       var type = _determineDartType(typeToMock, entryLib.typeProvider);
       if (type.alias == null) {
@@ -545,21 +520,15 @@ class _MockTargetGatherer {
     }
     final customMocksField = generateMocksValue.getField('customMocks');
     if (customMocksField != null && !customMocksField.isNull) {
-      final customMocksAsts =
-          _customMocksAst(annotation.annotationAst)?.elements ??
-              <ast.CollectionElement>[];
+      final customMocksAsts = _customMocksAst(annotation.annotationAst)?.elements ?? <ast.CollectionElement>[];
       mockTargets.addAll(customMocksField.toListValue()!.mapIndexed(
-          (index, mockSpec) => _mockTargetFromMockSpec(
-              mockSpec, entryLib, index, customMocksAsts.toList())));
+          (index, mockSpec) => _mockTargetFromMockSpec(mockSpec, entryLib, index, customMocksAsts.toList())));
     }
     return mockTargets;
   }
 
   static _MockTarget _mockTargetFromMockSpec(
-      DartObject mockSpec,
-      LibraryElement entryLib,
-      int index,
-      List<ast.CollectionElement> mockSpecAsts,
+      DartObject mockSpec, LibraryElement entryLib, int index, List<ast.CollectionElement> mockSpecAsts,
       {bool nice = false}) {
     final mockSpecType = mockSpec.type as analyzer.InterfaceType;
     assert(mockSpecType.typeArguments.length == 1);
@@ -568,22 +537,18 @@ class _MockTargetGatherer {
     if (typeToMock.isDynamic) {
       final mockTypeName = mockType?.qualifiedName;
       if (mockTypeName == null) {
-        throw InvalidMockitoAnnotationException(
-            'MockSpec requires a type argument to determine the class to mock. '
+        throw InvalidMockitoAnnotationException('MockSpec requires a type argument to determine the class to mock. '
             'Be sure to declare a type argument on the ${(index + 1).ordinal} '
             'MockSpec() in @GenerateMocks.');
       } else {
-        throw InvalidMockitoAnnotationException(
-            'Mockito cannot mock unknown type `$mockTypeName`. Did you '
+        throw InvalidMockitoAnnotationException('Mockito cannot mock unknown type `$mockTypeName`. Did you '
             'misspell it or forget to add a dependency on it?');
       }
     }
     var type = _determineDartType(typeToMock, entryLib.typeProvider);
     final mockTypeArguments = mockType?.typeArguments;
     if (mockTypeArguments != null) {
-      final typeName =
-          type.alias?.element.getDisplayString(withNullability: false) ??
-              'type $type';
+      final typeName = type.alias?.element.getDisplayString(withNullability: false) ?? 'type $type';
       final typeArguments = type.alias?.typeArguments ?? type.typeArguments;
       // Check explicit type arguments for unknown types that were
       // turned into `dynamic` by the analyzer.
@@ -593,8 +558,7 @@ class _MockTargetGatherer {
         final typeArgAst = mockTypeArguments.arguments[typeArgIdx];
         if (typeArgAst is! ast.NamedType) {
           // Is this even possible?
-          throw InvalidMockitoAnnotationException(
-              'Undefined type $typeArgAst passed as the '
+          throw InvalidMockitoAnnotationException('Undefined type $typeArgAst passed as the '
               '${(typeArgIdx + 1).ordinal} type argument for mocked '
               '$typeName.');
         }
@@ -618,20 +582,16 @@ class _MockTargetGatherer {
     for (final m in mockSpec.getField('mixins')!.toListValue()!) {
       final typeToMixin = m.toTypeValue();
       if (typeToMixin == null) {
-        throw InvalidMockitoAnnotationException(
-            'The "mixingIn" argument includes a non-type: $m');
+        throw InvalidMockitoAnnotationException('The "mixingIn" argument includes a non-type: $m');
       }
       if (typeToMixin.isDynamic) {
-        throw InvalidMockitoAnnotationException(
-            'Mockito cannot mix `dynamic` into a mock class');
+        throw InvalidMockitoAnnotationException('Mockito cannot mix `dynamic` into a mock class');
       }
-      final mixinInterfaceType =
-          _determineDartType(typeToMixin, entryLib.typeProvider);
+      final mixinInterfaceType = _determineDartType(typeToMixin, entryLib.typeProvider);
       mixins.add(mixinInterfaceType);
     }
 
-    final returnNullOnMissingStub =
-        mockSpec.getField('returnNullOnMissingStub')!.toBoolValue()!;
+    final returnNullOnMissingStub = mockSpec.getField('returnNullOnMissingStub')!.toBoolValue()!;
     final onMissingStubValue = mockSpec.getField('onMissingStub')!;
     final OnMissingStub onMissingStub;
     if (nice) {
@@ -643,13 +603,11 @@ class _MockTargetGatherer {
       if (onMissingStubValue.isNull) {
         onMissingStub = OnMissingStub.returnDefault;
       } else {
-        final onMissingStubIndex =
-            onMissingStubValue.getField('index')!.toIntValue()!;
+        final onMissingStubIndex = onMissingStubValue.getField('index')!.toIntValue()!;
         onMissingStub = OnMissingStub.values[onMissingStubIndex];
         // ignore: deprecated_member_use_from_same_package
         if (onMissingStub == OnMissingStub.returnNull) {
-          throw ArgumentError(
-              "'OnMissingStub.returnNull' is not supported with "
+          throw ArgumentError("'OnMissingStub.returnNull' is not supported with "
               '@GenerateNiceMocks');
         }
       }
@@ -667,17 +625,14 @@ class _MockTargetGatherer {
           throw ArgumentError("Cannot specify 'returnNullOnMissingStub' and a "
               "'onMissingStub' value at the same time.");
         }
-        final onMissingStubIndex =
-            onMissingStubValue.getField('index')!.toIntValue()!;
+        final onMissingStubIndex = onMissingStubValue.getField('index')!.toIntValue()!;
         onMissingStub = OnMissingStub.values[onMissingStubIndex];
       }
     }
     final unsupportedMembers = {
-      for (final m in mockSpec.getField('unsupportedMembers')!.toSetValue()!)
-        m.toSymbolValue()!,
+      for (final m in mockSpec.getField('unsupportedMembers')!.toSetValue()!) m.toSymbolValue()!,
     };
-    final fallbackGeneratorObjects =
-        mockSpec.getField('fallbackGenerators')!.toMapValue()!;
+    final fallbackGeneratorObjects = mockSpec.getField('fallbackGenerators')!.toMapValue()!;
     return _MockTarget(
       type,
       mockName: mockName,
@@ -694,31 +649,24 @@ class _MockTargetGatherer {
     final generateNiceMocksValue = annotation.computeConstantValue()!;
     final mockSpecsField = generateNiceMocksValue.getField('mocks')!;
     if (mockSpecsField.isNull) {
-      throw InvalidMockitoAnnotationException(
-          'The GenerateNiceMocks "mockSpecs" argument is missing');
+      throw InvalidMockitoAnnotationException('The GenerateNiceMocks "mockSpecs" argument is missing');
     }
     final mockSpecAsts = _niceMocksAst(annotation.annotationAst).elements;
-    return mockSpecsField.toListValue()!.mapIndexed((index, mockSpec) =>
-        _mockTargetFromMockSpec(
-            mockSpec, entryLib, index, mockSpecAsts.toList(),
-            nice: true));
+    return mockSpecsField.toListValue()!.mapIndexed(
+        (index, mockSpec) => _mockTargetFromMockSpec(mockSpec, entryLib, index, mockSpecAsts.toList(), nice: true));
   }
 
-  static Map<String, ExecutableElement> _extractFallbackGenerators(
-      Map<DartObject?, DartObject?> objects) {
+  static Map<String, ExecutableElement> _extractFallbackGenerators(Map<DartObject?, DartObject?> objects) {
     final fallbackGenerators = <String, ExecutableElement>{};
     objects.forEach((methodName, generator) {
       if (methodName == null) {
-        throw InvalidMockitoAnnotationException(
-            'Unexpected null key in fallbackGenerators: $objects');
+        throw InvalidMockitoAnnotationException('Unexpected null key in fallbackGenerators: $objects');
       }
       if (generator == null) {
-        throw InvalidMockitoAnnotationException(
-            'Unexpected null value in fallbackGenerators for key '
+        throw InvalidMockitoAnnotationException('Unexpected null value in fallbackGenerators for key '
             '"$methodName"');
       }
-      fallbackGenerators[methodName.toSymbolValue()!] =
-          generator.toFunctionValue()!;
+      fallbackGenerators[methodName.toSymbolValue()!] = generator.toFunctionValue()!;
     });
     return fallbackGenerators;
   }
@@ -729,54 +677,42 @@ class _MockTargetGatherer {
   /// This function is responsible for ensuring that each value is an
   /// appropriate target for mocking. It will throw an
   /// [InvalidMockitoAnnotationException] under various conditions.
-  static analyzer.InterfaceType _determineDartType(
-      analyzer.DartType typeToMock, TypeProvider typeProvider) {
+  static analyzer.InterfaceType _determineDartType(analyzer.DartType typeToMock, TypeProvider typeProvider) {
     if (typeToMock is analyzer.InterfaceType) {
       final elementToMock = typeToMock.element;
       final displayName = "'${elementToMock.displayName}'";
       if (elementToMock is EnumElement) {
-        throw InvalidMockitoAnnotationException(
-            'Mockito cannot mock an enum: $displayName');
+        throw InvalidMockitoAnnotationException('Mockito cannot mock an enum: $displayName');
       }
       if (typeProvider.isNonSubtypableClass(elementToMock)) {
-        throw InvalidMockitoAnnotationException(
-            'Mockito cannot mock a non-subtypable type: '
+        throw InvalidMockitoAnnotationException('Mockito cannot mock a non-subtypable type: '
             '$displayName. It is illegal to subtype this '
             'type.');
       }
       if (elementToMock is ClassElement) {
         if (elementToMock.isSealed) {
-          throw InvalidMockitoAnnotationException(
-              'Mockito cannot mock a sealed class $displayName, '
+          throw InvalidMockitoAnnotationException('Mockito cannot mock a sealed class $displayName, '
               'try mocking one of the variants instead.');
         }
         if (elementToMock.isBase) {
-          throw InvalidMockitoAnnotationException(
-              'Mockito cannot mock a base class $displayName.');
+          throw InvalidMockitoAnnotationException('Mockito cannot mock a base class $displayName.');
         }
         if (elementToMock.isFinal) {
-          throw InvalidMockitoAnnotationException(
-              'Mockito cannot mock a final class $displayName.');
+          throw InvalidMockitoAnnotationException('Mockito cannot mock a final class $displayName.');
         }
       }
       if (elementToMock.isPrivate) {
-        throw InvalidMockitoAnnotationException(
-            'Mockito cannot mock a private type: $displayName.');
+        throw InvalidMockitoAnnotationException('Mockito cannot mock a private type: $displayName.');
       }
-      final typeParameterErrors =
-          _checkTypeParameters(elementToMock.typeParameters, elementToMock);
+      final typeParameterErrors = _checkTypeParameters(elementToMock.typeParameters, elementToMock);
       if (typeParameterErrors.isNotEmpty) {
-        final joinedMessages =
-            typeParameterErrors.map((m) => '    $m').join('\n');
-        throw InvalidMockitoAnnotationException(
-            'Mockito cannot generate a valid mock class which implements '
+        final joinedMessages = typeParameterErrors.map((m) => '    $m').join('\n');
+        throw InvalidMockitoAnnotationException('Mockito cannot generate a valid mock class which implements '
             '$displayName for the following reasons:\n'
             '$joinedMessages');
       }
-      if (typeToMock.alias != null &&
-          typeToMock.nullabilitySuffix == NullabilitySuffix.question) {
-        throw InvalidMockitoAnnotationException(
-            'Mockito cannot mock a type-aliased nullable type: '
+      if (typeToMock.alias != null && typeToMock.nullabilitySuffix == NullabilitySuffix.question) {
+        throw InvalidMockitoAnnotationException('Mockito cannot mock a type-aliased nullable type: '
             '${typeToMock.alias!.element.name}');
       }
       return typeToMock;
@@ -787,11 +723,9 @@ class _MockTargetGatherer {
   }
 
   void _checkClassesToMockAreValid() {
-    final classesInEntryLib =
-        _entryLib.topLevelElements.whereType<InterfaceElement>();
+    final classesInEntryLib = _entryLib.topLevelElements.whereType<InterfaceElement>();
     final classNamesToMock = <String, _MockTarget>{};
-    final uniqueNameSuggestion =
-        "use the 'customMocks' argument in @GenerateMocks to specify a unique "
+    final uniqueNameSuggestion = "use the 'customMocks' argument in @GenerateMocks to specify a unique "
         'name';
     for (final mockTarget in _mockTargets) {
       final name = mockTarget.mockName;
@@ -799,8 +733,7 @@ class _MockTargetGatherer {
         final firstClass = classNamesToMock[name]!.interfaceElement;
         final firstSource = firstClass.source.fullName;
         final secondSource = mockTarget.interfaceElement.source.fullName;
-        throw InvalidMockitoAnnotationException(
-            'Mockito cannot generate two mocks with the same name: $name (for '
+        throw InvalidMockitoAnnotationException('Mockito cannot generate two mocks with the same name: $name (for '
             '${firstClass.name} declared in $firstSource, and for '
             '${mockTarget.interfaceElement.name} declared in $secondSource); '
             '$uniqueNameSuggestion.');
@@ -809,23 +742,17 @@ class _MockTargetGatherer {
     }
 
     classNamesToMock.forEach((name, mockTarget) {
-      final conflictingClass =
-          classesInEntryLib.firstWhereOrNull((c) => c.name == name);
+      final conflictingClass = classesInEntryLib.firstWhereOrNull((c) => c.name == name);
       if (conflictingClass != null) {
-        throw InvalidMockitoAnnotationException(
-            'Mockito cannot generate a mock with a name which conflicts with '
+        throw InvalidMockitoAnnotationException('Mockito cannot generate a mock with a name which conflicts with '
             'another class declared in this library: ${conflictingClass.name}; '
             '$uniqueNameSuggestion.');
       }
 
       final preexistingMock = classesInEntryLib.firstWhereOrNull((c) =>
-          c.interfaces
-              .map((type) => type.element)
-              .contains(mockTarget.interfaceElement) &&
-          _isMockClass(c.supertype!));
+          c.interfaces.map((type) => type.element).contains(mockTarget.interfaceElement) && _isMockClass(c.supertype!));
       if (preexistingMock != null) {
-        throw InvalidMockitoAnnotationException(
-            'The GenerateMocks annotation contains a class which appears to '
+        throw InvalidMockitoAnnotationException('The GenerateMocks annotation contains a class which appears to '
             'already be mocked inline: ${preexistingMock.name}; '
             '$uniqueNameSuggestion.');
       }
@@ -857,10 +784,8 @@ class _MockTargetGatherer {
         return _checkFunction(
           member.type,
           member,
-          allowUnsupportedMember:
-              mockTarget.unsupportedMembers.contains(member.name),
-          hasDummyGenerator:
-              mockTarget.fallbackGenerators.containsKey(member.name),
+          allowUnsupportedMember: mockTarget.unsupportedMembers.contains(member.name),
+          hasDummyGenerator: mockTarget.fallbackGenerators.containsKey(member.name),
         );
       } else {
         // Mockito is not going to override this method, so the types do not
@@ -870,10 +795,8 @@ class _MockTargetGatherer {
     }).toList();
 
     if (unstubbableErrorMessages.isNotEmpty) {
-      final joinedMessages =
-          unstubbableErrorMessages.map((m) => '    $m').join('\n');
-      throw InvalidMockitoAnnotationException(
-          'Mockito cannot generate a valid mock class which implements '
+      final joinedMessages = unstubbableErrorMessages.map((m) => '    $m').join('\n');
+      throw InvalidMockitoAnnotationException('Mockito cannot generate a valid mock class which implements '
           "'$className' for the following reasons:\n$joinedMessages");
     }
   }
@@ -911,8 +834,7 @@ class _MockTargetGatherer {
     if (returnType is analyzer.InterfaceType) {
       if (returnType.containsPrivateName) {
         if (!allowUnsupportedMember && !hasDummyGenerator) {
-          errorMessages.add(
-              '${enclosingElement.fullName} features a private return type, '
+          errorMessages.add('${enclosingElement.fullName} features a private return type, '
               'and cannot be stubbed. $_tryUnsupportedMembersMessage');
         }
       }
@@ -924,8 +846,7 @@ class _MockTargetGatherer {
       ));
     } else if (returnType is analyzer.FunctionType) {
       errorMessages.addAll(_checkFunction(returnType, enclosingElement,
-          allowUnsupportedMember: allowUnsupportedMember,
-          hasDummyGenerator: hasDummyGenerator));
+          allowUnsupportedMember: allowUnsupportedMember, hasDummyGenerator: hasDummyGenerator));
     }
 
     for (final parameter in function.parameters) {
@@ -937,8 +858,7 @@ class _MockTargetGatherer {
           // `Object?`. However, until there is a decent use case, we will not
           // generate such a mock.
           if (!allowUnsupportedMember) {
-            errorMessages.add(
-                '${enclosingElement.fullName} features a private parameter '
+            errorMessages.add('${enclosingElement.fullName} features a private parameter '
                 "type, '${parameterTypeElement.name}', and cannot be stubbed. "
                 '$_tryUnsupportedMembersMessage');
           }
@@ -950,18 +870,15 @@ class _MockTargetGatherer {
           allowUnsupportedMember: allowUnsupportedMember,
         ));
       } else if (parameterType is analyzer.FunctionType) {
-        errorMessages.addAll(
-            _checkFunction(parameterType, enclosingElement, isParameter: true));
+        errorMessages.addAll(_checkFunction(parameterType, enclosingElement, isParameter: true));
       }
     }
 
-    errorMessages
-        .addAll(_checkTypeParameters(function.typeFormals, enclosingElement));
+    errorMessages.addAll(_checkTypeParameters(function.typeFormals, enclosingElement));
 
     final aliasArguments = function.alias?.typeArguments;
     if (aliasArguments != null) {
-      errorMessages.addAll(_checkTypeArguments(aliasArguments, enclosingElement,
-          isParameter: isParameter));
+      errorMessages.addAll(_checkTypeArguments(aliasArguments, enclosingElement, isParameter: isParameter));
     }
 
     return errorMessages;
@@ -969,8 +886,7 @@ class _MockTargetGatherer {
 
   /// Checks the bounds of [typeParameters] for properties that would make the
   /// enclosing method un-stubbable.
-  static List<String> _checkTypeParameters(
-      List<TypeParameterElement> typeParameters, Element enclosingElement) {
+  static List<String> _checkTypeParameters(List<TypeParameterElement> typeParameters, Element enclosingElement) {
     final errorMessages = <String>[];
     for (final element in typeParameters) {
       final typeParameter = element.bound;
@@ -979,8 +895,7 @@ class _MockTargetGatherer {
         // TODO(srawlins): Check for private names in bound; could be
         // `List<_Bar>`.
         if (typeParameter.element.isPrivate) {
-          errorMessages.add(
-              '${enclosingElement.fullName} features a private type parameter '
+          errorMessages.add('${enclosingElement.fullName} features a private type parameter '
               'bound, and cannot be stubbed.');
         }
       }
@@ -1003,8 +918,7 @@ class _MockTargetGatherer {
     for (final typeArgument in typeArguments) {
       if (typeArgument is analyzer.InterfaceType) {
         if (typeArgument.element.isPrivate && !allowUnsupportedMember) {
-          errorMessages.add(
-              '${enclosingElement.fullName} features a private type argument, '
+          errorMessages.add('${enclosingElement.fullName} features a private type argument, '
               'and cannot be stubbed. $_tryUnsupportedMembersMessage');
         }
       } else if (typeArgument is analyzer.FunctionType) {
@@ -1021,8 +935,7 @@ class _MockTargetGatherer {
 
   /// Return whether [type] is the Mock class declared by mockito.
   bool _isMockClass(analyzer.InterfaceType type) =>
-      type.element.name == 'Mock' &&
-      type.element.source.fullName.endsWith('lib/src/mock.dart');
+      type.element.name == 'Mock' && type.element.source.fullName.endsWith('lib/src/mock.dart');
 }
 
 class _MockLibraryInfo {
@@ -1060,8 +973,7 @@ class _MockLibraryInfo {
     required this.assetUris,
     required LibraryElement entryLib,
     required InheritanceManager3 inheritanceManager,
-  }) : dartCoreLibrary = entryLib.importedLibraries
-            .firstWhereOrNull((library) => library.isDartCore) {
+  }) : dartCoreLibrary = entryLib.importedLibraries.firstWhereOrNull((library) => library.isDartCore) {
     for (final mockTarget in mockTargets) {
       final fallbackGenerators = mockTarget.fallbackGenerators;
       mockClasses.add(_MockClassInfo(
@@ -1081,8 +993,8 @@ class _MockLibraryInfo {
   final _fakeNames = <Element, String>{};
 
   /// Generates a unique name for a fake class representing [element].
-  String _fakeNameFor(Element element) => _fakeNames.putIfAbsent(
-      element, () => '_Fake${element.name}_${_fakeNameCounter++}');
+  String _fakeNameFor(Element element) =>
+      _fakeNames.putIfAbsent(element, () => '_Fake${element.name}_${_fakeNameCounter++}');
 }
 
 class _MockClassInfo {
@@ -1119,8 +1031,7 @@ class _MockClassInfo {
   Class _buildMockClass() {
     final typeAlias = mockTarget.classType.alias;
     final aliasedElement = typeAlias?.element;
-    final aliasedType =
-        typeAlias?.element.aliasedType as analyzer.InterfaceType?;
+    final aliasedType = typeAlias?.element.aliasedType as analyzer.InterfaceType?;
     final typeToMock = aliasedType ?? mockTarget.classType;
     final classToMock = mockTarget.interfaceElement;
     final classIsImmutable = classToMock.metadata.any((it) => it.isImmutable);
@@ -1143,13 +1054,10 @@ class _MockClassInfo {
       // parameter with same type variables, and a mirrored type argument for
       // the "implements" clause.
 
-      final typeParameters =
-          aliasedElement?.typeParameters ?? classToMock.typeParameters;
-      final typeArguments =
-          typeAlias?.typeArguments ?? typeToMock.typeArguments;
+      final typeParameters = aliasedElement?.typeParameters ?? classToMock.typeParameters;
+      final typeArguments = typeAlias?.typeArguments ?? typeToMock.typeArguments;
 
-      _withTypeParameters(
-          mockTarget.hasExplicitTypeArguments ? [] : typeParameters,
+      _withTypeParameters(mockTarget.hasExplicitTypeArguments ? [] : typeParameters,
           (typeParamsWithBounds, typeParams) {
         cBuilder.types.addAll(typeParamsWithBounds);
         for (final mixin in mockTarget.mixins) {
@@ -1164,9 +1072,7 @@ class _MockClassInfo {
           b
             ..symbol = className
             ..url = _typeImport(aliasedElement ?? classToMock)
-            ..types.addAll(mockTarget.hasExplicitTypeArguments
-                ? typeArguments.map(_typeReference)
-                : typeParams);
+            ..types.addAll(mockTarget.hasExplicitTypeArguments ? typeArguments.map(_typeReference) : typeParams);
         }));
         if (mockTarget.onMissingStub == OnMissingStub.throwException) {
           cBuilder.constructors.add(_constructorWithThrowOnMissingStub);
@@ -1179,34 +1085,25 @@ class _MockClassInfo {
           ...typeToMock.typeArguments,
           ...?typeAlias?.typeArguments,
         ]);
-        final members = inheritanceManager
-            .getInterface(classToMock)
-            .map
-            .values
-            .map((member) {
+        final members = inheritanceManager.getInterface(classToMock).map.values.map((member) {
           return ExecutableMember.from2(member, substitution);
         });
 
         // The test can be pre-null-safety but if the class
         // we want to mock is defined in a null safe library,
         // we still need to override methods to get nice mocks.
-        final isNiceMockOfNullSafeClass = mockTarget.onMissingStub ==
-                OnMissingStub.returnDefault &&
+        final isNiceMockOfNullSafeClass = mockTarget.onMissingStub == OnMissingStub.returnDefault &&
             typeToMock.element.enclosingElement.library.isNonNullableByDefault;
 
         if (sourceLibIsNonNullable || isNiceMockOfNullSafeClass) {
-          cBuilder.methods.addAll(
-              fieldOverrides(members.whereType<PropertyAccessorElement>()));
-          cBuilder.methods
-              .addAll(methodOverrides(members.whereType<MethodElement>()));
+          cBuilder.methods.addAll(fieldOverrides(members.whereType<PropertyAccessorElement>()));
+          cBuilder.methods.addAll(methodOverrides(members.whereType<MethodElement>()));
         } else {
           // For a pre-null safe library, we do not need to re-implement any
           // members for the purpose of expanding their parameter types. However,
           // we may need to include an implementation of `toString()`, if the
           // class-to-mock has added optional parameters.
-          final toStringMethod = members
-              .whereType<MethodElement>()
-              .firstWhereOrNull((m) => m.name == 'toString');
+          final toStringMethod = members.whereType<MethodElement>().firstWhereOrNull((m) => m.name == 'toString');
           if (toStringMethod != null) {
             cBuilder.methods.addAll(methodOverrides([toStringMethod]));
           }
@@ -1222,8 +1119,7 @@ class _MockClassInfo {
   /// Only public instance fields which have either a potentially non-nullable
   /// return type (for getters) or a parameter with a potentially non-nullable
   /// type (for setters) are yielded.
-  Iterable<Method> fieldOverrides(
-      Iterable<PropertyAccessorElement> accessors) sync* {
+  Iterable<Method> fieldOverrides(Iterable<PropertyAccessorElement> accessors) sync* {
     for (final accessor in accessors) {
       if (accessor.isPrivate) {
         continue;
@@ -1298,10 +1194,8 @@ class _MockClassInfo {
   /// The default behavior of mocks is to return null for unstubbed methods. To
   /// use the new behavior of throwing an error, we must explicitly call
   /// `throwOnMissingStub`.
-  Constructor get _constructorWithThrowOnMissingStub =>
-      Constructor((cBuilder) => cBuilder.body =
-          referImported('throwOnMissingStub', 'package:mockito/mockito.dart')
-              .call([refer('this').expression]).statement);
+  Constructor get _constructorWithThrowOnMissingStub => Constructor((cBuilder) => cBuilder.body =
+      referImported('throwOnMissingStub', 'package:mockito/mockito.dart').call([refer('this').expression]).statement);
 
   /// Build a method which overrides [method], with all non-nullable
   /// parameter types widened to be nullable.
@@ -1331,10 +1225,9 @@ class _MockClassInfo {
       var position = 0;
       for (final parameter in method.parameters) {
         if (parameter.isRequiredPositional || parameter.isOptionalPositional) {
-          final superParameterType =
-              _escapeCovariance(parameter, position: position);
-          final matchingParameter = _matchingParameter(parameter,
-              superParameterType: superParameterType, forceNullable: true);
+          final superParameterType = _escapeCovariance(parameter, position: position);
+          final matchingParameter =
+              _matchingParameter(parameter, superParameterType: superParameterType, forceNullable: true);
           if (parameter.isRequiredPositional) {
             builder.requiredParameters.add(matchingParameter);
           } else {
@@ -1343,16 +1236,13 @@ class _MockClassInfo {
           invocationPositionalArgs.add(refer(parameter.displayName));
           position++;
         } else if (parameter.isNamed) {
-          final superParameterType =
-              _escapeCovariance(parameter, isNamed: true);
-          final matchingParameter = _matchingParameter(parameter,
-              superParameterType: superParameterType, forceNullable: true);
+          final superParameterType = _escapeCovariance(parameter, isNamed: true);
+          final matchingParameter =
+              _matchingParameter(parameter, superParameterType: superParameterType, forceNullable: true);
           builder.optionalParameters.add(matchingParameter);
-          invocationNamedArgs[refer('#${parameter.displayName}')] =
-              refer(parameter.displayName);
+          invocationNamedArgs[refer('#${parameter.displayName}')] = refer(parameter.displayName);
         } else {
-          throw StateError(
-              'Parameter ${parameter.name} on method ${method.name} '
+          throw StateError('Parameter ${parameter.name} on method ${method.name} '
               'is not required-positional, nor optional-positional, nor named');
         }
       }
@@ -1365,33 +1255,28 @@ class _MockClassInfo {
       }
 
       final fallbackGenerator = fallbackGenerators[method.name];
-      final parametersContainPrivateName =
-          method.parameters.any((p) => p.type.containsPrivateName);
-      final throwsUnsupported = fallbackGenerator == null &&
-          (returnType.containsPrivateName || parametersContainPrivateName);
+      final parametersContainPrivateName = method.parameters.any((p) => p.type.containsPrivateName);
+      final throwsUnsupported =
+          fallbackGenerator == null && (returnType.containsPrivateName || parametersContainPrivateName);
 
       if (throwsUnsupported) {
         if (!mockTarget.unsupportedMembers.contains(name)) {
           // We shouldn't get here as this is guarded against in
           // [_MockTargetGatherer._checkFunction].
-          throw InvalidMockitoAnnotationException(
-              "Mockito cannot generate a valid override for '$name', as it has "
+          throw InvalidMockitoAnnotationException("Mockito cannot generate a valid override for '$name', as it has "
               'a private type in its signature.');
         }
         builder.body = refer('UnsupportedError')
             .call([
               // Generate a raw string since name might contain a $.
-              literalString(
-                  '"$name" cannot be used without a mockito fallback generator.',
-                  raw: true)
+              literalString('"$name" cannot be used without a mockito fallback generator.', raw: true)
             ])
             .thrown
             .code;
         return;
       }
 
-      final invocation =
-          referImported('Invocation', 'dart:core').property('method').call([
+      final invocation = referImported('Invocation', 'dart:core').property('method').call([
         refer('#${method.displayName}'),
         literalList(invocationPositionalArgs),
         if (invocationNamedArgs.isNotEmpty) literalMap(invocationNamedArgs),
@@ -1401,13 +1286,11 @@ class _MockClassInfo {
       if (returnType.isVoid) {
         returnValueForMissingStub = refer('null');
       } else if (returnType.isFutureOfVoid) {
-        returnValueForMissingStub =
-            _futureReference(refer('void')).property('value').call([]);
+        returnValueForMissingStub = _futureReference(refer('void')).property('value').call([]);
       } else if (mockTarget.onMissingStub == OnMissingStub.returnDefault) {
         if (fallbackGenerator != null) {
           // Re-use the fallback for missing stub.
-          returnValueForMissingStub =
-              _fallbackGeneratorCode(method, fallbackGenerator);
+          returnValueForMissingStub = _fallbackGeneratorCode(method, fallbackGenerator);
         } else {
           // Return a legal default value if no stub is found which matches a real
           // call.
@@ -1419,12 +1302,10 @@ class _MockClassInfo {
           'returnValue': _fallbackGeneratorCode(method, fallbackGenerator)
         else if (typeSystem._returnTypeIsNonNullable(method))
           'returnValue': _dummyValue(returnType, invocation),
-        if (returnValueForMissingStub != null)
-          'returnValueForMissingStub': returnValueForMissingStub,
+        if (returnValueForMissingStub != null) 'returnValueForMissingStub': returnValueForMissingStub,
       };
 
-      var superNoSuchMethod =
-          refer('super').property('noSuchMethod').call([invocation], namedArgs);
+      var superNoSuchMethod = refer('super').property('noSuchMethod').call([invocation], namedArgs);
       if (!returnType.isVoid && !returnType.isDynamic) {
         superNoSuchMethod = superNoSuchMethod.asA(_typeReference(returnType));
       }
@@ -1433,8 +1314,7 @@ class _MockClassInfo {
     });
   }
 
-  Expression _fallbackGeneratorCode(
-      ExecutableElement method, ExecutableElement function) {
+  Expression _fallbackGeneratorCode(ExecutableElement method, ExecutableElement function) {
     final positionalArguments = <Expression>[];
     final namedArguments = <String, Expression>{};
     for (final parameter in method.parameters) {
@@ -1444,16 +1324,12 @@ class _MockClassInfo {
         namedArguments[parameter.name] = refer(parameter.name);
       }
     }
-    final functionReference =
-        referImported(function.name, _typeImport(function));
-    return functionReference.call(positionalArguments, namedArguments, [
-      for (final t in method.typeParameters)
-        _typeParameterReference(t, withBound: false)
-    ]);
+    final functionReference = referImported(function.name, _typeImport(function));
+    return functionReference.call(positionalArguments, namedArguments,
+        [for (final t in method.typeParameters) _typeParameterReference(t, withBound: false)]);
   }
 
-  Expression _dummyValueFallbackToRuntime(
-          analyzer.DartType type, Expression invocation) =>
+  Expression _dummyValueFallbackToRuntime(analyzer.DartType type, Expression invocation) =>
       referImported('dummyValue', 'package:mockito/src/dummies.dart')
           .call([refer('this'), invocation], {}, [_typeReference(type)]);
 
@@ -1489,36 +1365,27 @@ class _MockClassInfo {
       return refer('() {}');
     } else if (type.isDartAsyncFuture || type.isDartAsyncFutureOr) {
       final typeArgument = typeArguments.first;
-      final typeArgumentIsPotentiallyNonNullable =
-          typeSystem.isPotentiallyNonNullable(typeArgument);
-      if (typeArgument is analyzer.TypeParameterType &&
-          typeArgumentIsPotentiallyNonNullable) {
+      final typeArgumentIsPotentiallyNonNullable = typeSystem.isPotentiallyNonNullable(typeArgument);
+      if (typeArgument is analyzer.TypeParameterType && typeArgumentIsPotentiallyNonNullable) {
         // We cannot create a valid Future for this unknown, potentially
         // non-nullable type, so try creating a value at run-time and if
         // that fails, we'll use a `_FakeFuture`, which will throw
         // if awaited.
         final futureType = typeProvider.futureType(typeArguments.first);
-        return referImported('ifNotNull', 'package:mockito/src/dummies.dart')
-            .call([
+        return referImported('ifNotNull', 'package:mockito/src/dummies.dart').call([
           referImported('dummyValueOrNull', 'package:mockito/src/dummies.dart')
-              .call([refer('this'), invocation], {},
-                  [_typeReference(typeArgument)]),
+              .call([refer('this'), invocation], {}, [_typeReference(typeArgument)]),
           Method((b) => b
             ..requiredParameters.add(Parameter((p) => p
               ..type = _typeReference(typeArgument)
               ..name = 'v'))
-            ..body = _futureReference(_typeReference(typeArgument))
-                .property('value')
-                .call([refer('v')]).code).closure
+            ..body = _futureReference(_typeReference(typeArgument)).property('value').call([refer('v')]).code).closure
         ]).ifNullThen(_dummyValueImplementing(futureType, invocation));
       } else {
         // Create a real Future with a legal value, via [Future.value].
-        final futureValueArguments = typeArgumentIsPotentiallyNonNullable
-            ? [_dummyValue(typeArgument, invocation)]
-            : <Expression>[];
-        return _futureReference(_typeReference(typeArgument))
-            .property('value')
-            .call(futureValueArguments);
+        final futureValueArguments =
+            typeArgumentIsPotentiallyNonNullable ? [_dummyValue(typeArgument, invocation)] : <Expression>[];
+        return _futureReference(_typeReference(typeArgument)).property('value').call(futureValueArguments);
       }
     } else if (type.isDartCoreInt) {
       return literalNum(0);
@@ -1553,8 +1420,7 @@ class _MockClassInfo {
       // sealed, e.g. "non-subtypeable", but they
       // have predicatble constructors; each has an unnamed constructor which
       // takes a single int argument.
-      return referImported(type.element.name, 'dart:typed_data')
-          .call([literalNum(0)]);
+      return referImported(type.element.name, 'dart:typed_data').call([literalNum(0)]);
       // TODO(srawlins): Do other types from typed_data have a "non-subtypeable"
       // restriction as well?
     }
@@ -1575,8 +1441,7 @@ class _MockClassInfo {
         }
       });
 
-  Expression _dummyFunctionValue(
-      analyzer.FunctionType type, Expression invocation) {
+  Expression _dummyFunctionValue(analyzer.FunctionType type, Expression invocation) {
     return Method((b) {
       _withTypeParameters(type.typeFormals, (typeParamsWithBounds, _) {
         b.types.addAll(typeParamsWithBounds);
@@ -1585,24 +1450,20 @@ class _MockClassInfo {
         var position = 0;
         for (final parameter in type.parameters) {
           if (parameter.isRequiredPositional) {
-            final matchingParameter = _matchingParameter(parameter,
-                superParameterType: parameter.type,
-                defaultName: '__p$position');
+            final matchingParameter =
+                _matchingParameter(parameter, superParameterType: parameter.type, defaultName: '__p$position');
             b.requiredParameters.add(matchingParameter);
             position++;
           } else if (parameter.isOptionalPositional) {
-            final matchingParameter = _matchingParameter(parameter,
-                superParameterType: parameter.type,
-                defaultName: '__p$position');
+            final matchingParameter =
+                _matchingParameter(parameter, superParameterType: parameter.type, defaultName: '__p$position');
             b.optionalParameters.add(matchingParameter);
             position++;
           } else if (parameter.isOptionalNamed) {
-            final matchingParameter = _matchingParameter(parameter,
-                superParameterType: parameter.type);
+            final matchingParameter = _matchingParameter(parameter, superParameterType: parameter.type);
             b.optionalParameters.add(matchingParameter);
           } else if (parameter.isRequiredNamed) {
-            final matchingParameter = _matchingParameter(parameter,
-                superParameterType: parameter.type);
+            final matchingParameter = _matchingParameter(parameter, superParameterType: parameter.type);
             b.optionalParameters.add(matchingParameter);
           }
         }
@@ -1615,20 +1476,12 @@ class _MockClassInfo {
     }).genericClosure;
   }
 
-  Expression _dummyRecordValue(
-          analyzer.RecordType type, Expression invocation) =>
-      literalRecord(
-        [
-          for (final f in type.positionalFields) _dummyValue(f.type, invocation)
-        ],
-        {
-          for (final f in type.namedFields)
-            f.name: _dummyValue(f.type, invocation)
-        },
+  Expression _dummyRecordValue(analyzer.RecordType type, Expression invocation) => literalRecord(
+        [for (final f in type.positionalFields) _dummyValue(f.type, invocation)],
+        {for (final f in type.namedFields) f.name: _dummyValue(f.type, invocation)},
       );
 
-  Expression _dummyFakedValue(
-      analyzer.InterfaceType dartType, Expression invocation) {
+  Expression _dummyFakedValue(analyzer.InterfaceType dartType, Expression invocation) {
     final elementToFake = dartType.element;
     final fakeName = mockLibraryInfo._fakeNameFor(elementToFake);
     // Only make one fake class for each class that needs to be faked.
@@ -1643,16 +1496,12 @@ class _MockClassInfo {
     }).newInstance([refer('this'), invocation]);
   }
 
-  Expression _dummyValueImplementing(
-      analyzer.InterfaceType dartType, Expression invocation) {
+  Expression _dummyValueImplementing(analyzer.InterfaceType dartType, Expression invocation) {
     final elementToFake = dartType.element;
     if (elementToFake is EnumElement) {
-      return _typeReference(dartType).property(
-          elementToFake.fields.firstWhere((f) => f.isEnumConstant).name);
+      return _typeReference(dartType).property(elementToFake.fields.firstWhere((f) => f.isEnumConstant).name);
     } else if (elementToFake is ClassElement) {
-      if (elementToFake.isBase ||
-          elementToFake.isFinal ||
-          elementToFake.isSealed) {
+      if (elementToFake.isBase || elementToFake.isFinal || elementToFake.isSealed) {
         // This class can't be faked, so try to call `dummyValue` to get
         // a dummy value at run time.
         // TODO(yanok): Consider checking subtypes, maybe some of them are
@@ -1680,8 +1529,7 @@ class _MockClassInfo {
       cBuilder
         ..name = fakeName
         ..extend = referImported('SmartFake', 'package:mockito/mockito.dart');
-      _withTypeParameters(elementToFake.typeParameters,
-          (typeParamsWithBounds, typeParams) {
+      _withTypeParameters(elementToFake.typeParameters, (typeParamsWithBounds, typeParams) {
         cBuilder.types.addAll(typeParamsWithBounds);
         cBuilder.implements.add(TypeReference((b) {
           b
@@ -1698,16 +1546,13 @@ class _MockClassInfo {
               ..name = 'parentInvocation'
               ..type = referImported('Invocation', 'dart:core'))
           ])
-          ..initializers.add(refer('super')
-              .call([refer('parent'), refer('parentInvocation')]).code)));
+          ..initializers.add(refer('super').call([refer('parent'), refer('parentInvocation')]).code)));
 
-        final toStringMethod =
-            elementToFake.lookUpMethod('toString', elementToFake.library);
+        final toStringMethod = elementToFake.lookUpMethod('toString', elementToFake.library);
         if (toStringMethod != null && toStringMethod.parameters.isNotEmpty) {
           // If [elementToFake] includes an overriding `toString` implementation,
           // we need to include an implementation which matches the signature.
-          cBuilder.methods.add(Method(
-              (mBuilder) => _buildOverridingMethod(mBuilder, toStringMethod)));
+          cBuilder.methods.add(Method((mBuilder) => _buildOverridingMethod(mBuilder, toStringMethod)));
         }
       });
     }));
@@ -1722,9 +1567,7 @@ class _MockClassInfo {
   /// If the type needs to be nullable, rather than matching the nullability of
   /// [parameter], use [forceNullable].
   Parameter _matchingParameter(ParameterElement parameter,
-      {required analyzer.DartType superParameterType,
-      String? defaultName,
-      bool forceNullable = false}) {
+      {required analyzer.DartType superParameterType, String? defaultName, bool forceNullable = false}) {
     assert(
         parameter.name.isNotEmpty || defaultName != null,
         'parameter must have a non-empty name, or non-null defaultName must be '
@@ -1734,8 +1577,7 @@ class _MockClassInfo {
     return Parameter((pBuilder) {
       pBuilder.name = name;
       if (!superParameterType.containsPrivateName) {
-        pBuilder.type = _typeReference(superParameterType,
-            forceNullable: forceNullable, overrideVoid: true);
+        pBuilder.type = _typeReference(superParameterType, forceNullable: forceNullable, overrideVoid: true);
       }
       if (parameter.isNamed) pBuilder.named = true;
       if (parameter.isRequiredNamed && sourceLibIsNonNullable) {
@@ -1743,13 +1585,10 @@ class _MockClassInfo {
       }
       if (parameter.defaultValueCode != null) {
         try {
-          pBuilder.defaultTo = _expressionFromDartObject(
-                  parameter.computeConstantValue()!, parameter)
-              .code;
+          pBuilder.defaultTo = _expressionFromDartObject(parameter.computeConstantValue()!, parameter).code;
         } on _ReviveException catch (e) {
           final method = parameter.enclosingElement!;
-          throw InvalidMockitoAnnotationException(
-              'Mockito cannot generate a valid override for method '
+          throw InvalidMockitoAnnotationException('Mockito cannot generate a valid override for method '
               "'${mockTarget.interfaceElement.displayName}.${method.displayName}'; "
               "parameter '${parameter.displayName}' causes a problem: "
               '${e.message}');
@@ -1770,8 +1609,7 @@ class _MockClassInfo {
   /// longer guaranteed, and we must look around at the types of of the
   /// corresponding parameters in all of the overridden methods in order to
   /// determine a legal type for a generated overridding method.
-  analyzer.DartType _escapeCovariance(ParameterElement parameter,
-      {int? position, bool isNamed = false}) {
+  analyzer.DartType _escapeCovariance(ParameterElement parameter, {int? position, bool isNamed = false}) {
     assert(position != null || isNamed);
     assert(position == null || !isNamed);
     var type = parameter.type;
@@ -1788,8 +1626,8 @@ class _MockClassInfo {
     final allOverriddenMethods = Queue.of(overriddenMethods);
     while (allOverriddenMethods.isNotEmpty) {
       final overriddenMethod = allOverriddenMethods.removeFirst();
-      final secondaryOverrides = inheritanceManager.getOverridden2(
-          overriddenMethod.enclosingElement as InterfaceElement, name);
+      final secondaryOverrides =
+          inheritanceManager.getOverridden2(overriddenMethod.enclosingElement as InterfaceElement, name);
       if (secondaryOverrides != null) {
         allOverriddenMethods.addAll(secondaryOverrides);
       }
@@ -1805,8 +1643,7 @@ class _MockClassInfo {
         // TODO(srawlins): Assert that [overriddenParameter] is not named.
         type = typeSystem.leastUpperBound(type, overriddenParameter.type);
       } else {
-        final overriddenParameter =
-            parameters.firstWhereOrNull((p) => p.name == parameter.name);
+        final overriddenParameter = parameters.firstWhereOrNull((p) => p.name == parameter.name);
         if (overriddenParameter == null) {
           // [parameter] has been _added_ in [method], and has no corresponding
           // parameter in [overriddenMethod].
@@ -1825,8 +1662,7 @@ class _MockClassInfo {
   ///
   /// This is very similar to Angular's revive code, in
   /// angular_compiler/analyzer/di/injector.dart.
-  Expression _expressionFromDartObject(DartObject object,
-      [ParameterElement? parameter]) {
+  Expression _expressionFromDartObject(DartObject object, [ParameterElement? parameter]) {
     final constant = ConstantReader(object);
     if (constant.isNull) {
       return literalNull;
@@ -1839,21 +1675,14 @@ class _MockClassInfo {
     } else if (constant.isString) {
       return literalString(constant.stringValue, raw: true);
     } else if (constant.isList) {
-      return literalConstList([
-        for (final element in constant.listValue)
-          _expressionFromDartObject(element)
-      ]);
+      return literalConstList([for (final element in constant.listValue) _expressionFromDartObject(element)]);
     } else if (constant.isMap) {
       return literalConstMap({
         for (final pair in constant.mapValue.entries)
-          _expressionFromDartObject(pair.key!):
-              _expressionFromDartObject(pair.value!)
+          _expressionFromDartObject(pair.key!): _expressionFromDartObject(pair.value!)
       });
     } else if (constant.isSet) {
-      return literalConstSet({
-        for (final element in constant.setValue)
-          _expressionFromDartObject(element)
-      });
+      return literalConstSet({for (final element in constant.setValue) _expressionFromDartObject(element)});
     } else if (constant.isType) {
       // TODO(srawlins): It seems like this might be revivable, but Angular
       // does not revive Types; we should investigate this if users request it.
@@ -1865,11 +1694,9 @@ class _MockClassInfo {
       // object constructed with `const`. Revive it.
       final revivable = constant.revive();
       if (revivable.isPrivate) {
-        final privateReference = revivable.accessor.isNotEmpty
-            ? '${revivable.source}::${revivable.accessor}'
-            : '${revivable.source}';
-        throw _ReviveException(
-            'default value has a private type: $privateReference.');
+        final privateReference =
+            revivable.accessor.isNotEmpty ? '${revivable.source}::${revivable.accessor}' : '${revivable.source}';
+        throw _ReviveException('default value has a private type: $privateReference.');
       }
       if (object.toFunctionValue() != null) {
         // A top-level function, like `void f() {}` must be referenced by its
@@ -1879,22 +1706,18 @@ class _MockClassInfo {
       } else if (revivable.source.fragment.isEmpty) {
         // We can create this invocation by referring to a const field or
         // top-level variable.
-        return referImported(
-            revivable.accessor, _typeImport(object.type!.element));
+        return referImported(revivable.accessor, _typeImport(object.type!.element));
       }
 
       final name = revivable.source.fragment;
       final positionalArgs = [
-        for (final argument in revivable.positionalArguments)
-          _expressionFromDartObject(argument)
+        for (final argument in revivable.positionalArguments) _expressionFromDartObject(argument)
       ];
       final namedArgs = {
-        for (final pair in revivable.namedArguments.entries)
-          pair.key: _expressionFromDartObject(pair.value)
+        for (final pair in revivable.namedArguments.entries) pair.key: _expressionFromDartObject(pair.value)
       };
-      final element = parameter != null && name != object.type!.element!.name
-          ? parameter.type.element
-          : object.type!.element;
+      final element =
+          parameter != null && name != object.type!.element!.name ? parameter.type.element : object.type!.element;
       final type = referImported(name, _typeImport(element));
       if (revivable.accessor.isNotEmpty) {
         return type.constInstanceNamed(
@@ -1913,8 +1736,7 @@ class _MockClassInfo {
   ///
   /// This new method just calls `super.noSuchMethod`, optionally passing a
   /// return value for non-nullable getters.
-  void _buildOverridingGetter(
-      MethodBuilder builder, PropertyAccessorElement getter) {
+  void _buildOverridingGetter(MethodBuilder builder, PropertyAccessorElement getter) {
     builder
       ..name = getter.displayName
       ..annotations.add(referImported('override', 'dart:core'))
@@ -1926,14 +1748,12 @@ class _MockClassInfo {
 
     final returnType = getter.returnType;
     final fallbackGenerator = fallbackGenerators[getter.name];
-    final throwsUnsupported =
-        fallbackGenerator == null && (getter.returnType.containsPrivateName);
+    final throwsUnsupported = fallbackGenerator == null && (getter.returnType.containsPrivateName);
     if (throwsUnsupported) {
       if (!mockTarget.unsupportedMembers.contains(getter.name)) {
         // We shouldn't get here as this is guarded against in
         // [_MockTargetGatherer._checkFunction].
-        throw InvalidMockitoAnnotationException(
-            "Mockito cannot generate a valid override for '${getter.name}', as "
+        throw InvalidMockitoAnnotationException("Mockito cannot generate a valid override for '${getter.name}', as "
             'it has a private type.');
       }
       builder.body = refer('UnsupportedError')
@@ -1949,8 +1769,7 @@ class _MockClassInfo {
       return;
     }
 
-    final invocation =
-        referImported('Invocation', 'dart:core').property('getter').call([
+    final invocation = referImported('Invocation', 'dart:core').property('getter').call([
       refer('#${getter.displayName}'),
     ]);
     final namedArgs = {
@@ -1963,8 +1782,7 @@ class _MockClassInfo {
             ? _fallbackGeneratorCode(getter, fallbackGenerator)
             : _dummyValue(returnType, invocation)),
     };
-    var superNoSuchMethod =
-        refer('super').property('noSuchMethod').call([invocation], namedArgs);
+    var superNoSuchMethod = refer('super').property('noSuchMethod').call([invocation], namedArgs);
     if (!returnType.isVoid && !returnType.isDynamic) {
       superNoSuchMethod = superNoSuchMethod.asA(_typeReference(returnType));
     }
@@ -1976,8 +1794,7 @@ class _MockClassInfo {
   /// type to be nullable if it is non-nullable.
   ///
   /// This new setter just calls `super.noSuchMethod`.
-  void _buildOverridingSetter(
-      MethodBuilder builder, PropertyAccessorElement setter) {
+  void _buildOverridingSetter(MethodBuilder builder, PropertyAccessorElement setter) {
     final nameWithEquals = setter.name;
     final name = setter.displayName;
     builder
@@ -1990,8 +1807,7 @@ class _MockClassInfo {
     builder.requiredParameters.add(Parameter((pBuilder) {
       pBuilder.name = parameter.displayName;
       if (!parameter.type.containsPrivateName) {
-        pBuilder.type = _typeReference(parameter.type,
-            forceNullable: true, overrideVoid: true);
+        pBuilder.type = _typeReference(parameter.type, forceNullable: true, overrideVoid: true);
       }
     }));
 
@@ -1999,8 +1815,7 @@ class _MockClassInfo {
       if (!mockTarget.unsupportedMembers.contains(nameWithEquals)) {
         // We shouldn't get here as this is guarded against in
         // [_MockTargetGatherer._checkFunction].
-        throw InvalidMockitoAnnotationException(
-            "Mockito cannot generate a valid override for '$nameWithEquals', "
+        throw InvalidMockitoAnnotationException("Mockito cannot generate a valid override for '$nameWithEquals', "
             'as it has a private parameter type.');
       }
       builder.body = refer('UnsupportedError')
@@ -2016,14 +1831,12 @@ class _MockClassInfo {
       return;
     }
 
-    final invocation =
-        referImported('Invocation', 'dart:core').property('setter').call([
+    final invocation = referImported('Invocation', 'dart:core').property('setter').call([
       refer('#$name'),
       refer(parameter.displayName),
     ]);
-    final returnNoSuchMethod = refer('super')
-        .property('noSuchMethod')
-        .call([invocation], {'returnValueForMissingStub': refer('null')});
+    final returnNoSuchMethod =
+        refer('super').property('noSuchMethod').call([invocation], {'returnValueForMissingStub': refer('null')});
 
     builder.body = returnNoSuchMethod.code;
   }
@@ -2032,10 +1845,8 @@ class _MockClassInfo {
   final Set<String> _usedTypeVariables = {};
 
   String _lookupTypeParameter(TypeParameterElement typeParameter) =>
-      _typeVariableScopes.reversed.firstWhereOrNull(
-          (scope) => scope.containsKey(typeParameter))?[typeParameter] ??
-      (throw StateError(
-          '$typeParameter not found, scopes: $_typeVariableScopes'));
+      _typeVariableScopes.reversed.firstWhereOrNull((scope) => scope.containsKey(typeParameter))?[typeParameter] ??
+      (throw StateError('$typeParameter not found, scopes: $_typeVariableScopes'));
 
   String _newTypeVar(TypeParameterElement typeParameter) {
     var idx = 0;
@@ -2051,11 +1862,24 @@ class _MockClassInfo {
 
   T _withTypeParameters<T>(Iterable<TypeParameterElement> typeParameters,
       T Function(Iterable<TypeReference>, Iterable<TypeReference>) body) {
-    final typeVars = {for (final t in typeParameters) t: _newTypeVar(t)};
+    final Map<TypeParameterElement, String> typeVars = {};
+    for (final t in typeParameters) {
+      final typeVar = _newTypeVar(t);
+      typeVars[t] = typeVar;
+      final bound = t.bound;
+      if (bound != null && bound is analyzer.InterfaceType) {
+        for (final type in bound.typeArguments) {
+          final element = type.element;
+          if (element != null && element is TypeParameterElement) {
+            typeVars[element] = typeVar;
+          }
+        }
+      }
+    }
+
     _typeVariableScopes.add(typeVars);
     final typeRefsWithBounds = typeParameters.map(_typeParameterReference);
-    final typeRefs =
-        typeParameters.map((t) => _typeParameterReference(t, withBound: false));
+    final typeRefs = typeParameters.map((t) => _typeParameterReference(t, withBound: false));
 
     final result = body(typeRefsWithBounds, typeRefs);
     _typeVariableScopes.removeLast();
@@ -2065,8 +1889,7 @@ class _MockClassInfo {
 
   /// Create a reference for [typeParameter], properly referencing all types
   /// in bounds.
-  TypeReference _typeParameterReference(TypeParameterElement typeParameter,
-      {bool withBound = true}) {
+  TypeReference _typeParameterReference(TypeParameterElement typeParameter, {bool withBound = true}) {
     return TypeReference((b) {
       b.symbol = _lookupTypeParameter(typeParameter);
       if (withBound && typeParameter.bound != null) {
@@ -2088,8 +1911,7 @@ class _MockClassInfo {
   /// * type variables.
   // TODO(srawlins): Contribute this back to a common location, like
   // package:source_gen?
-  Reference _typeReference(analyzer.DartType type,
-      {bool forceNullable = false, bool overrideVoid = false}) {
+  Reference _typeReference(analyzer.DartType type, {bool forceNullable = false, bool overrideVoid = false}) {
     if (overrideVoid && type.isVoid) {
       return TypeReference((b) => b..symbol = 'dynamic');
     }
@@ -2100,9 +1922,7 @@ class _MockClassInfo {
       return TypeReference((b) {
         b
           ..symbol = type.element.name
-          ..isNullable = !type.isDartCoreNull &&
-              (forceNullable ||
-                  type.nullabilitySuffix == NullabilitySuffix.question)
+          ..isNullable = !type.isDartCoreNull && (forceNullable || type.nullabilitySuffix == NullabilitySuffix.question)
           ..url = _typeImport(type.element)
           ..types.addAll(type.typeArguments.map(_typeReference));
       });
@@ -2111,26 +1931,18 @@ class _MockClassInfo {
       if (alias == null || alias.element.isPrivate) {
         // [type] does not refer to a type alias, or it refers to a private type
         // alias; we must instead write out its signature.
-        return FunctionType((b) =>
-            _withTypeParameters(type.typeFormals, (typeParams, _) {
+        return FunctionType((b) => _withTypeParameters(type.typeFormals, (typeParams, _) {
               b.types.addAll(typeParams);
               b
-                ..isNullable =
-                    forceNullable || typeSystem.isPotentiallyNullable(type)
+                ..isNullable = forceNullable || typeSystem.isPotentiallyNullable(type)
                 ..returnType = _typeReference(type.returnType)
-                ..requiredParameters
-                    .addAll(type.normalParameterTypes.map(_typeReference))
-                ..optionalParameters
-                    .addAll(type.optionalParameterTypes.map(_typeReference));
-              for (final parameter
-                  in type.parameters.where((p) => p.isOptionalNamed)) {
-                b.namedParameters[parameter.name] =
-                    _typeReference(parameter.type);
+                ..requiredParameters.addAll(type.normalParameterTypes.map(_typeReference))
+                ..optionalParameters.addAll(type.optionalParameterTypes.map(_typeReference));
+              for (final parameter in type.parameters.where((p) => p.isOptionalNamed)) {
+                b.namedParameters[parameter.name] = _typeReference(parameter.type);
               }
-              for (final parameter
-                  in type.parameters.where((p) => p.isRequiredNamed)) {
-                b.namedRequiredParameters[parameter.name] =
-                    _typeReference(parameter.type);
+              for (final parameter in type.parameters.where((p) => p.isRequiredNamed)) {
+                b.namedRequiredParameters[parameter.name] = _typeReference(parameter.type);
               }
             }));
       }
@@ -2151,10 +1963,8 @@ class _MockClassInfo {
       });
     } else if (type is analyzer.RecordType) {
       return RecordType((b) => b
-        ..positionalFieldTypes.addAll(
-            [for (final f in type.positionalFields) _typeReference(f.type)])
-        ..namedFieldTypes.addAll(
-            {for (final f in type.namedFields) f.name: _typeReference(f.type)})
+        ..positionalFieldTypes.addAll([for (final f in type.positionalFields) _typeReference(f.type)])
+        ..namedFieldTypes.addAll({for (final f in type.namedFields) f.name: _typeReference(f.type)})
         ..isNullable = forceNullable || typeSystem.isNullable(type));
     } else {
       return referImported(
@@ -2177,16 +1987,14 @@ class _MockClassInfo {
     assert(mockLibraryInfo.assetUris.containsKey(element),
         'An element, "$element", is missing from the asset URI mapping');
 
-    return mockLibraryInfo.assetUris[element] ??
-        (throw StateError('Asset URI is missing for $element'));
+    return mockLibraryInfo.assetUris[element] ?? (throw StateError('Asset URI is missing for $element'));
   }
 
   /// Returns a [Reference] to [symbol] with [url].
   ///
   /// This function overrides `code_builder.refer` so as to ensure that [url] is
   /// given.
-  static Reference referImported(String symbol, String? url) =>
-      Reference(symbol, url);
+  static Reference referImported(String symbol, String? url) => Reference(symbol, url);
 
   /// Returns a [Reference] to [symbol] with no URL.
   static Reference refer(String symbol) => Reference(symbol);
@@ -2232,8 +2040,7 @@ class _AvoidConflictsAllocator implements Allocator {
   /// from 'dart:core'.
   final Set<String> _coreConflicts;
 
-  _AvoidConflictsAllocator({required Set<String> coreConflicts})
-      : _coreConflicts = coreConflicts;
+  _AvoidConflictsAllocator({required Set<String> coreConflicts}) : _coreConflicts = coreConflicts;
 
   @override
   String allocate(Reference reference) {
@@ -2298,11 +2105,9 @@ extension on analyzer.DartType {
     } else if (self is analyzer.InvalidType) {
       return false;
     } else if (self is analyzer.InterfaceType) {
-      return self.element.isPrivate ||
-          self.typeArguments.any((t) => t.containsPrivateName);
+      return self.element.isPrivate || self.typeArguments.any((t) => t.containsPrivateName);
     } else if (self is analyzer.FunctionType) {
-      return self.returnType.containsPrivateName ||
-          self.parameters.any((p) => p.type.containsPrivateName);
+      return self.returnType.containsPrivateName || self.parameters.any((p) => p.type.containsPrivateName);
     } else if (self is analyzer.NeverType) {
       return false;
     } else if (self is analyzer.TypeParameterType) {
@@ -2319,9 +2124,7 @@ extension on analyzer.DartType {
   }
 
   /// Returns whether this type is `Future<void>` or `Future<void>?`.
-  bool get isFutureOfVoid =>
-      isDartAsyncFuture &&
-      (this as analyzer.InterfaceType).typeArguments.first.isVoid;
+  bool get isFutureOfVoid => isDartAsyncFuture && (this as analyzer.InterfaceType).typeArguments.first.isVoid;
 
   /// Returns whether this type is a sealed type from the dart:typed_data
   /// library.
@@ -2345,8 +2148,7 @@ extension on analyzer.DartType {
 }
 
 extension on TypeSystem {
-  bool _returnTypeIsNonNullable(ExecutableElement method) =>
-      isPotentiallyNonNullable(method.returnType);
+  bool _returnTypeIsNonNullable(ExecutableElement method) => isPotentiallyNonNullable(method.returnType);
 
   // Returns whether [method] has at least one parameter whose type is
   // potentially non-nullable.
@@ -2386,8 +2188,7 @@ bool _needsOverrideForVoidStub(ExecutableElement method) =>
 /// class, since analyzer doesn't provide public interface to access
 /// the annotation AST currently.
 extension on ElementAnnotation {
-  ast.Annotation get annotationAst =>
-      (this as ElementAnnotationImpl).annotationAst;
+  ast.Annotation get annotationAst => (this as ElementAnnotationImpl).annotationAst;
 }
 
 extension NamedTypeExtension on ast.NamedType {
